@@ -1,0 +1,176 @@
+#include<iostream>
+#include <fstream>
+#include <string>
+#include <iomanip>
+#include <sstream>
+#include <cstdlib> // for system() and exit()
+using namespace std;
+class Person 
+{
+protected:
+	string name, address, phone;
+public:
+	virtual void input() = 0;
+	virtual void display() = 0;
+};
+class Customer : public Person 
+{
+	int room_no;
+public:
+	void input() override 
+{
+		cout << "Enter Room Number: ";
+		cin >> room_no;
+		cin.ignore(); // to clear newline
+		cout << "Enter Name: ";
+		getline(cin, name);
+		cout << "Enter Address: ";
+		getline(cin, address);
+		cout << "Enter Phone: ";
+		getline(cin, phone);
+		ofstream fout("HotelData.txt", ios::app);
+		fout << room_no << "," << name << "," << address << "," << phone << endl;
+		fout.close();
+		cout << "\nBooking Added Successfully!";
+	}
+	void display() override 
+{
+		ifstream fin("HotelData.txt");
+		if (!fin) 
+    {
+			cout << "\nNo Records Found!";
+			return;
+		}
+		cout << "\n--------------------------------------------------------------";
+		cout << "\nRoom No\tName\t\tAddress\t\tPhone";
+		cout << "\n--------------------------------------------------------------\n";
+		string line;
+		while (getline(fin, line)) {
+			stringstream ss(line);
+			string r, n, a, p;
+			getline(ss, r, ',');
+			getline(ss, n, ',');
+			getline(ss, a, ',');
+			getline(ss, p, ',');
+			cout << setw(6) << r << "\t" << setw(12) << n << "\t"
+			     << setw(12) << a << "\t" << p << endl;
+		}
+		fin.close();
+	}
+	void search(int r) {
+		ifstream fin("HotelData.txt");
+		bool found = false;
+		string line;
+		while (getline(fin, line)) {
+			stringstream ss(line);
+			string rn, n, a, p;
+			getline(ss, rn, ',');
+			getline(ss, n, ',');
+			getline(ss, a, ',');
+			getline(ss, p, ',');
+			if (stoi(rn) == r) {
+				cout << "\nRoom No: " << rn
+				     << "\nName: " << n
+				     << "\nAddress: " << a
+				     << "\nPhone: " << p << endl;
+				found = true;
+				break;
+			}
+		}
+		if (!found) cout << "\nRecord Not Found!";
+		fin.close();
+	}
+	void deleteRecord(int r) {
+		ifstream fin("HotelData.txt");
+		ofstream fout("Temp.txt");
+		bool found = false;
+		string line;
+		while (getline(fin, line)) {
+			stringstream ss(line);
+			string rn, n, a, p;
+			getline(ss, rn, ',');
+			getline(ss, n, ',');
+			getline(ss, a, ',');
+			getline(ss, p, ',');
+			if (stoi(rn) == r) {
+				found = true;
+			} else {
+				fout << rn << "," << n << "," << a << "," << p << endl;
+			}
+		}
+		fin.close();
+		fout.close();
+		remove("HotelData.txt");
+		rename("Temp.txt", "HotelData.txt");
+		if (found)
+			cout << "\nRecord Deleted Successfully!";
+		else
+			cout << "\nRecord Not Found!";
+	}
+};
+class Menu 
+{
+public:
+	virtual void showMenu() = 0;
+};
+class HotelSystem : public Menu 
+{
+public:
+	void showMenu() override 
+	{
+		Customer c;
+		int choice;
+		while (true) 
+		{
+			system("cls"); // clear screen (use "clear" on Linux/Mac)
+			cout << "\n\t\tHOTEL MANAGEMENT SYSTEM\n";
+			cout << "-------------------------------------------\n";
+			cout << "1. Add Booking\n";
+			cout << "2. Display All\n";
+			cout << "3. Search\n";
+			cout << "4. Delete\n";
+			cout << "5. Exit\n";
+			cout << "-------------------------------------------\n";
+			cout << "Enter Choice: ";
+			cin >> choice;
+			switch (choice) 
+			{
+			case 1:
+				c.input();
+				break;
+			case 2:
+				c.display();
+				break;
+			case 3: 
+			{
+				int r;
+				cout << "Enter Room Number to Search: ";
+				cin >> r;
+				c.search(r);
+				break;
+			}
+			case 4: 
+			{
+				int r;
+				cout << "Enter Room Number to Delete: ";
+				cin >> r;
+				c.deleteRecord(r);
+				break;
+			}
+			case 5:
+				exit(0);
+			default:
+				cout << "\nInvalid Choice!";
+			}
+			cout << "\n\nPress Enter to Continue...";
+			cin.ignore();
+			cin.get();
+		}
+	}
+};
+int main() 
+{
+	HotelSystem h;
+	h.showMenu();
+	return 0;
+}
